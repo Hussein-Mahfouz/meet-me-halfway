@@ -1,5 +1,3 @@
-# Meet Me Halfway
-
 # Motivation
 
 We all struggle with suitable locations to meet. We've all had to cheekily suggest a place more convenient to us or reluctantly accept a meeting point that we deem much more convenient for the other person. The problem becomes more difficult as the group gets bigger ... how do you decide on a place that takes more or less the same effort for 3 people coming from different starting points to get to? What about 5? What if one uses a bike and the other prefers public transport? What if we want a specific venue? Our choice set for cafes is larger than that for cinemas
