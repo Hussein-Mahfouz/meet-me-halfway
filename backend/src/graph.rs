@@ -1,10 +1,13 @@
+use std::time::Duration;
+
 use anyhow::Result;
-use geo::{LineString, Point, Polygon};
+use geo::{EuclideanLength, LineString, Point, Polygon};
 use geojson::{Feature, Geometry};
 use rstar::{primitives::GeomWithData, RTree};
 use utils::Mercator;
 
 use crate::amenity::Amenity;
+use crate::route::Router;
 
 // This is only for walking
 pub struct Graph {
@@ -16,6 +19,7 @@ pub struct Graph {
     pub boundary_polygon: Polygon,
 
     pub amenities: Vec<Amenity>,
+    pub router: Router,
 }
 
 pub type IntersectionLocation = GeomWithData<[f64; 2], IntersectionID>;
@@ -94,5 +98,12 @@ impl Road {
             // TODO Assumes the input is one of the two, and assumes no self-loops
             self.src_i
         }
+    }
+
+    pub fn get_cost(&self) -> Duration {
+        // 3 mph in meters/second
+        let walking_speed = 1.34112;
+
+        Duration::from_secs_f64(self.linestring.euclidean_length() / walking_speed)
     }
 }

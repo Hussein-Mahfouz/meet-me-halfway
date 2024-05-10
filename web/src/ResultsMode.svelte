@@ -4,6 +4,7 @@
     CircleLayer,
     Marker,
     hoverStateFilter,
+          LineLayer,
   } from "svelte-maplibre";
   import {
     SequentialLegend,
@@ -13,7 +14,7 @@
   } from "svelte-utils";
   import SplitComponent from "./SplitComponent.svelte";
   import { mode, model, type Person, type POI, averageTime } from "./stores";
-  import type { FeatureCollection } from "geojson";
+  import type { Feature, Point, FeatureCollection } from "geojson";
 
   export let people: Person[];
 
@@ -57,6 +58,24 @@
         };
       }),
     };
+  }
+
+  let hoveredAmenity: Feature<Point> | null;
+  let routeGj: FeatureCollection | null = null;
+  $: if (hoveredAmenity) {
+    try {
+      routeGj = JSON.parse(
+              $model!.routesTo({
+                      people,
+                      point: hoveredAmenity.geometry.coordinates,
+              })
+      );
+    } catch (err: any) {
+      routeGj = null;
+      console.error(`routesTo broke: ${err}`);
+    }
+  } else {
+    routeGj = null;
   }
 </script>
 
@@ -106,6 +125,7 @@
             "_blank",
           )}
         hoverCursor="pointer"
+  bind:hovered={hoveredAmenity}
       >
         <Popup openOn="hover" let:props>
           <h5>{props.name || "Unnamed"} ({props.kind})</h5>
@@ -122,6 +142,17 @@
           </span>
         </Marker>
       {/each}
+
+    {#if routeGj}
+      <GeoJSON data={routeGj}>
+        <LineLayer
+          paint={{
+            "line-width": 10,
+            "line-color": "red",
+          }}
+        />
+      </GeoJSON>
+    {/if}
     </GeoJSON>
   </div>
 </SplitComponent>

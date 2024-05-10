@@ -1,12 +1,12 @@
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::time::Duration;
 
-use geo::{Coord, EuclideanLength, Point};
+use geo::{Coord, Point};
 use serde::Serialize;
 use utils::PriorityQueueItem;
 
 use crate::graph::{AmenityID, Graph, IntersectionID};
-use crate::{Person, Request};
+use crate::{x_y, CalculateRequest, Person};
 
 #[derive(Serialize)]
 pub struct POI {
@@ -19,7 +19,7 @@ pub struct POI {
     pub times_per_person: Vec<(String, u64)>,
 }
 
-pub fn find_pois(graph: &Graph, req: Request) -> Vec<POI> {
+pub fn find_pois(graph: &Graph, req: CalculateRequest) -> Vec<POI> {
     let mut pois: HashMap<AmenityID, POI> = HashMap::new();
 
     let num_people = req.people.len();
@@ -46,9 +46,6 @@ pub fn find_pois(graph: &Graph, req: Request) -> Vec<POI> {
 }
 
 fn get_costs(graph: &Graph, person: &Person) -> HashMap<AmenityID, Duration> {
-    // 3 mph in meters/second
-    let walking_speed = 1.34112;
-
     let start = graph
         .closest_intersection
         .nearest_neighbor(&x_y(graph.mercator.pt_to_mercator(Coord {
@@ -75,23 +72,18 @@ fn get_costs(graph: &Graph, person: &Person) -> HashMap<AmenityID, Duration> {
         }
 
         for road in graph.roads_per_intersection(current.value) {
-            let this_cost =
-                Duration::from_secs_f64(road.linestring.euclidean_length() / walking_speed);
+            let total_cost = current.cost + road.get_cost();
 
             for a in &road.amenities {
-                cost_per_poi.insert(*a, current.cost + this_cost);
+                cost_per_poi.insert(*a, total_cost);
             }
 
             queue.push(PriorityQueueItem::new(
-                current.cost + this_cost,
+                total_cost,
                 road.other_side(current.value),
             ));
         }
     }
 
     cost_per_poi
-}
-
-fn x_y(c: Coord) -> [f64; 2] {
-    [c.x, c.y]
 }

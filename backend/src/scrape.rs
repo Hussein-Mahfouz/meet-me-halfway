@@ -11,6 +11,7 @@ use crate::amenity::Amenity;
 use crate::graph::{
     AmenityID, Graph, Intersection, IntersectionID, IntersectionLocation, Road, RoadID,
 };
+use crate::route::Router;
 
 pub fn scrape_osm(input_bytes: &[u8]) -> Result<Graph> {
     info!("Parsing {} bytes of OSM data", input_bytes.len());
@@ -108,6 +109,8 @@ pub fn scrape_osm(input_bytes: &[u8]) -> Result<Graph> {
     }
     let closest_intersection = RTree::bulk_load(points);
 
+    let router = Router::new(&roads);
+
     Ok(Graph {
         roads,
         intersections,
@@ -116,6 +119,7 @@ pub fn scrape_osm(input_bytes: &[u8]) -> Result<Graph> {
         boundary_polygon: graph.boundary_polygon,
 
         amenities,
+        router,
     })
 }
 

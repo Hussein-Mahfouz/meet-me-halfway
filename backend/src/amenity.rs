@@ -1,7 +1,6 @@
 use geo::Point;
-use geojson::{Feature, Geometry};
 use osm_reader::OsmID;
-use utils::{Mercator, Tags};
+use utils::Tags;
 
 use crate::graph::AmenityID;
 
@@ -23,16 +22,6 @@ impl Amenity {
             name: tags.get("name").cloned(),
             kind,
         })
-    }
-
-    pub fn to_gj(&self, mercator: &Mercator) -> Feature {
-        let mut f = Feature::from(Geometry::from(&mercator.to_wgs84(&self.point)));
-        f.set_property("amenity_kind", self.kind.clone());
-        f.set_property("osm_id", self.osm_id.to_string());
-        if let Some(ref name) = self.name {
-            f.set_property("name", name.clone());
-        }
-        f
     }
 
     /// Determines if this OSM object should count as some kind of useful commercial amenity.
