@@ -3,15 +3,21 @@ extern crate log;
 
 use std::sync::Once;
 
-use geo::Coord;
-use serde::Deserialize;
 use wasm_bindgen::prelude::*;
+
+use self::graph::Graph;
+
+mod amenity;
+mod graph;
+mod scrape;
 
 static START: Once = Once::new();
 
 // TODO Rename
 #[wasm_bindgen]
-pub struct MapModel {}
+pub struct MapModel {
+    graph: Graph,
+}
 
 #[wasm_bindgen]
 impl MapModel {
@@ -24,18 +30,21 @@ impl MapModel {
             console_log::init_with_level(log::Level::Info).unwrap();
         });
 
-        Ok(MapModel {})
+        Ok(MapModel {
+            graph: Graph::new(input_bytes).map_err(err_to_js)?,
+        })
     }
 
     /// Return a polygon covering the world, minus a hole for the boundary, in WGS84
     #[wasm_bindgen(js_name = getInvertedBoundary)]
     pub fn get_inverted_boundary(&self) -> Result<String, JsValue> {
-        todo!()
+        self.graph.get_inverted_boundary().map_err(err_to_js)
     }
 
     #[wasm_bindgen(js_name = getBounds)]
     pub fn get_bounds(&self) -> Vec<f64> {
-        todo!()
+        let b = &self.graph.mercator.wgs84_bounds;
+        vec![b.min().x, b.min().y, b.max().x, b.max().y]
     }
 }
 
