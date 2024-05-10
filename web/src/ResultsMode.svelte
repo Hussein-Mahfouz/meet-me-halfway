@@ -4,7 +4,7 @@
     CircleLayer,
     Marker,
     hoverStateFilter,
-          LineLayer,
+    LineLayer,
   } from "svelte-maplibre";
   import {
     SequentialLegend,
@@ -13,19 +13,39 @@
     notNull,
   } from "svelte-utils";
   import SplitComponent from "./SplitComponent.svelte";
-  import { mode, model, type Person, type POI, averageTime } from "./stores";
+  import { mode, model, type Person, type POI } from "./stores";
   import type { Feature, Point, FeatureCollection } from "geojson";
 
   export let people: Person[];
 
   let pois = calculate(people);
 
+  let sortBy: "max" | "sum" = "sum";
+
+  function sumList(list: number[]): number {
+    let result = 0;
+    for (let x of list) {
+      result += x;
+    }
+    return result;
+  }
+  let sortFunction = {
+    max: (poi: POI) =>
+      Math.max(...poi.times_per_person.map(([name, cost]) => cost)),
+    sum: (poi: POI) =>
+      sumList(poi.times_per_person.map(([name, cost]) => cost)),
+  };
+
+  $: resortData(sortBy);
+
+  function resortData(sortBy: "max" | "sum") {
+    pois.sort((a, b) => sortFunction[sortBy](a) - sortFunction[sortBy](b));
+    pois = pois;
+  }
+
   function calculate(people: Person[]): POI[] {
     try {
-      let pois: POI[] = JSON.parse($model!.findPOIs({ people }));
-      // Sort by the average time, just to make the list less intense
-      pois.sort((a, b) => averageTime(a) - averageTime(b));
-      return pois;
+      return JSON.parse($model!.findPOIs({ people }));
     } catch (err) {
       window.alert(`Bug: ${err}`);
       $mode = { kind: "input", people };
@@ -49,7 +69,7 @@
             kind: poi.kind,
             name: poi.name,
             times_per_person: poi.times_per_person,
-            average: averageTime(poi),
+            score: sortFunction[sortBy](poi),
           },
           geometry: {
             type: "Point",
@@ -65,10 +85,10 @@
   $: if (hoveredAmenity) {
     try {
       routeGj = JSON.parse(
-              $model!.routesTo({
-                      people,
-                      point: hoveredAmenity.geometry.coordinates,
-              })
+        $model!.routesTo({
+          people,
+          point: hoveredAmenity.geometry.coordinates,
+        }),
       );
     } catch (err: any) {
       routeGj = null;
@@ -93,6 +113,11 @@
 
     <SequentialLegend {colorScale} limits={limitsMinutes} />
 
+    <select bind:value={sortBy}>
+      <option value="sum">Sum of travel time of everyone</option>
+      <option value="max">Maximum / worst-case travel time of anyone</option>
+    </select>
+
     <ul>
       {#each pois as poi}
         <li>
@@ -113,7 +138,7 @@
           "circle-opacity": 0,
           "circle-stroke-width": hoverStateFilter(2, 4),
           "circle-stroke-color": makeColorRamp(
-            ["get", "average"],
+            ["get", "score"],
             limitsSeconds,
             colorScale,
           ),
@@ -125,7 +150,7 @@
             "_blank",
           )}
         hoverCursor="pointer"
-  bind:hovered={hoveredAmenity}
+        bind:hovered={hoveredAmenity}
       >
         <Popup openOn="hover" let:props>
           <h5>{props.name || "Unnamed"} ({props.kind})</h5>
@@ -143,16 +168,16 @@
         </Marker>
       {/each}
 
-    {#if routeGj}
-      <GeoJSON data={routeGj}>
-        <LineLayer
-          paint={{
-            "line-width": 10,
-            "line-color": "red",
-          }}
-        />
-      </GeoJSON>
-    {/if}
+      {#if routeGj}
+        <GeoJSON data={routeGj}>
+          <LineLayer
+            paint={{
+              "line-width": 10,
+              "line-color": "red",
+            }}
+          />
+        </GeoJSON>
+      {/if}
     </GeoJSON>
   </div>
 </SplitComponent>
