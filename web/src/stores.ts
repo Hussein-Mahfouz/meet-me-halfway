@@ -7,9 +7,13 @@ export let maptilerApiKey = "MZEJTanw3WpxRvt7qDfo";
 export let sidebarContents: Writable<HTMLDivElement | null> = writable(null);
 export let mapContents: Writable<HTMLDivElement | null> = writable(null);
 
-export type Mode = "title" | "input" | "results";
+// TODO types for the results
+export type Mode =
+  | { kind: "title" }
+  | { kind: "input" }
+  | { kind: "results"; data: any };
 
-export let mode: Writable<Mode> = writable("title");
+export let mode: Writable<Mode> = writable({ kind: "title" });
 export let model: Writable<MapModel | null> = writable(null);
 export let map: Writable<Map | null> = writable(null);
 export let showAbout: Writable<boolean> = writable(true);

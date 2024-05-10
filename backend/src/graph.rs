@@ -67,10 +67,7 @@ impl Graph {
         Ok(out)
     }
 
-    pub fn roads_per_intersection(
-        &self,
-        i: IntersectionID,
-    ) -> impl Iterator<Item = &Road> {
+    pub fn roads_per_intersection(&self, i: IntersectionID) -> impl Iterator<Item = &Road> {
         self.intersections[i.0]
             .roads
             .iter()
@@ -86,5 +83,16 @@ impl Graph {
             }
         }
         panic!("no road from {i1:?} to {i2:?} or vice versa");
+    }
+}
+
+impl Road {
+    pub fn other_side(&self, i: IntersectionID) -> IntersectionID {
+        if self.src_i == i {
+            self.dst_i
+        } else {
+            // TODO Assumes the input is one of the two, and assumes no self-loops
+            self.src_i
+        }
     }
 }

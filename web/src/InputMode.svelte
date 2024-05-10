@@ -4,7 +4,7 @@
   import { onMount, onDestroy } from "svelte";
   import SplitComponent from "./SplitComponent.svelte";
   import { mode } from "./stores";
-  import { map } from "./stores";
+  import { model, map } from "./stores";
 
   interface Person {
     name: string;
@@ -37,17 +37,29 @@
     people.splice(idx, 1);
     people = people;
   }
+
+  function calculate() {
+    try {
+      let data = JSON.parse($model!.findPOIs({ people }));
+      $mode = { kind: "results", data };
+    } catch (err) {
+      window.alert(`Bug: ${err}`);
+    }
+  }
 </script>
 
 <SplitComponent>
   <div slot="sidebar">
     <h2>Input mode</h2>
     <div>
-      <button on:click={() => ($mode = "title")}>Change study area</button>
+      <button on:click={() => ($mode = { kind: "title" })}
+        >Change study area</button
+      >
     </div>
 
     <p>Click the map to add people</p>
-    <button disabled={people.length == 0}>Calculate</button>
+    <button disabled={people.length == 0} on:click={calculate}>Calculate</button
+    >
 
     {#each people as person, idx}
       <h2>Person {idx + 1}</h2>
@@ -55,7 +67,8 @@
         Name: <input type="text" bind:value={person.name} />
       </label>
       <label>
-        Max travel time (minutes): {person.maxTimeMinutes} <input
+        Max travel time (minutes): {person.maxTimeMinutes}
+        <input
           type="range"
           min="5"
           max="120"

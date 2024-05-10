@@ -44,7 +44,7 @@
     }
     console.log("New map model loaded");
     zoomToFit();
-    $mode = "input";
+    $mode = { kind: "input" };
   }
   $: gotModel($model);
 
@@ -65,7 +65,7 @@
     <h1>Meet Me Halfway</h1>
     <div bind:this={sidebarDiv} />
 
-    {#if $mode != "title"}
+    {#if $mode.kind != "title"}
       <hr />
       <div><button on:click={zoomToFit}>Zoom to fit</button></div>
     {/if}
@@ -80,17 +80,17 @@
       <Geocoder {map} apiKey={maptilerApiKey} />
       <div bind:this={mapDiv} />
 
-      {#if $mode == "title"}
+      {#if $mode.kind == "title"}
         <TitleMode {wasmReady} />
       {/if}
       {#if $model}
         <GeoJSON data={JSON.parse($model.getInvertedBoundary())}>
           <FillLayer paint={{ "fill-color": "black", "fill-opacity": 0.3 }} />
         </GeoJSON>
-        {#if $mode == "input"}
+        {#if $mode.kind == "input"}
           <InputMode />
-        {:else if $mode == "results"}
-          <ResultsMode />
+        {:else if $mode.kind == "results"}
+          <ResultsMode data={$mode.data} />
         {/if}
       {/if}
     </MapLibre>

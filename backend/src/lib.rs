@@ -3,11 +3,13 @@ extern crate log;
 
 use std::sync::Once;
 
+use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
 use self::graph::Graph;
 
 mod amenity;
+mod find;
 mod graph;
 mod scrape;
 
@@ -46,6 +48,26 @@ impl MapModel {
         let b = &self.graph.mercator.wgs84_bounds;
         vec![b.min().x, b.min().y, b.max().x, b.max().y]
     }
+
+    #[wasm_bindgen(js_name = findPOIs)]
+    pub fn find_pois(&self, input: JsValue) -> Result<String, JsValue> {
+        let req: Request = serde_wasm_bindgen::from_value(input)?;
+        let results = find::find_pois(&self.graph, req);
+        Ok(serde_json::to_string(&results).map_err(err_to_js)?)
+    }
+}
+
+#[derive(Deserialize)]
+pub struct Request {
+    people: Vec<Person>,
+}
+
+#[derive(Deserialize)]
+pub struct Person {
+    name: String,
+    home: [f64; 2],
+    #[serde(rename = "maxTimeMinutes")]
+    max_time_minutes: u64,
 }
 
 fn err_to_js<E: std::fmt::Display>(err: E) -> JsValue {
