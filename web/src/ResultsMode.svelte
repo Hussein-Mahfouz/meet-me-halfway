@@ -13,7 +13,8 @@
     notNull,
   } from "svelte-utils";
   import SplitComponent from "./SplitComponent.svelte";
-  import { mode, model, type Person, type POI } from "./stores";
+  import Poi from "./Poi.svelte";
+  import { mode, model, type Person, type POI, colours } from "./stores";
   import type { Feature, Point, FeatureCollection } from "geojson";
 
   export let people: Person[];
@@ -58,7 +59,7 @@
   let limitsSeconds = limitsMinutes.map((x) => x * 60);
   let colorScale = ["#CDE594", "#80C6A3", "#1F9EB7", "#186290", "#080C54"];
 
-  function toGj(data: POI[]): FeatureCollection {
+  function toGj(data: POI[]): FeatureCollection<Point> {
     return {
       type: "FeatureCollection",
       features: data.map((poi) => {
@@ -80,8 +81,9 @@
     };
   }
 
+  let gjData = toGj(pois);
   let hoveredAmenity: Feature<Point> | null;
-  let routeGj: FeatureCollection | null = null;
+  let routeGj: FeatureCollection[] | null = null;
   $: if (hoveredAmenity) {
     try {
       routeGj = JSON.parse(
@@ -118,20 +120,15 @@
       <option value="max">Maximum / worst-case travel time of anyone</option>
     </select>
 
-    <ul>
+    <div class="poi_container">
       {#each pois as poi}
-        <li>
-          <a href={poi.osm_url} target="_blank"
-            >{poi.name || "Unnamed"} ({poi.kind})</a
-          >
-          <span>{JSON.stringify(poi.times_per_person)}</span>
-        </li>
+            <Poi {poi} {gjData} bind:hoveredAmenity />
       {/each}
-    </ul>
+    </div>
   </div>
 
   <div slot="map">
-    <GeoJSON data={toGj(pois)} generateId>
+    <GeoJSON data={gjData} generateId>
       <CircleLayer
         paint={{
           "circle-radius": 5,
@@ -162,21 +159,23 @@
 
       {#each people as person, idx}
         <Marker lngLat={person.home}>
-          <span class="dot">
+          <span class="dot" style="background-color: {colours[idx % colours.length]}">
             {idx + 1}
           </span>
         </Marker>
       {/each}
 
       {#if routeGj}
-        <GeoJSON data={routeGj}>
-          <LineLayer
-            paint={{
-              "line-width": 10,
-              "line-color": "red",
-            }}
-          />
-        </GeoJSON>
+        {#each routeGj as route, idx}
+          <GeoJSON data={route}>
+            <LineLayer
+              paint={{
+                "line-width": 10,
+                "line-color": colours[idx % colours.length],
+              }}
+            />
+          </GeoJSON>
+        {/each}
       {/if}
     </GeoJSON>
   </div>
@@ -187,13 +186,19 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    display: inline-block;
 
-    background-color: red;
     color: white;
     border: 3px solid white;
     text-align: center;
-    /* TODO Weird way to vertically align */
-    line-height: 250%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .poi_container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 </style>
