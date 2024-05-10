@@ -44,7 +44,7 @@
     }
     console.log("New map model loaded");
     zoomToFit();
-    $mode = { kind: "input" };
+    $mode = { kind: "input", people: [] };
   }
   $: gotModel($model);
 
@@ -88,9 +88,9 @@
           <FillLayer paint={{ "fill-color": "black", "fill-opacity": 0.3 }} />
         </GeoJSON>
         {#if $mode.kind == "input"}
-          <InputMode />
+          <InputMode people={$mode.people} />
         {:else if $mode.kind == "results"}
-          <ResultsMode data={$mode.data} />
+          <ResultsMode people={$mode.people} />
         {/if}
       {/if}
     </MapLibre>

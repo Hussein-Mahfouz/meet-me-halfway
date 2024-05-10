@@ -1,17 +1,36 @@
 <script lang="ts">
-  import { GeoJSON, CircleLayer, hoverStateFilter } from "svelte-maplibre";
+  import {
+    GeoJSON,
+    CircleLayer,
+    Marker,
+    hoverStateFilter,
+  } from "svelte-maplibre";
   import {
     SequentialLegend,
     makeColorRamp,
-    PropertiesTable,
     Popup,
     notNull,
   } from "svelte-utils";
   import SplitComponent from "./SplitComponent.svelte";
-  import { mode, type POI, averageTime } from "./stores";
+  import { mode, model, type Person, type POI, averageTime } from "./stores";
   import type { FeatureCollection } from "geojson";
 
-  export let data: POI[];
+  export let people: Person[];
+
+  let pois = calculate(people);
+
+  function calculate(people: Person[]): POI[] {
+    try {
+      let pois: POI[] = JSON.parse($model!.findPOIs({ people }));
+      // Sort by the average time, just to make the list less intense
+      pois.sort((a, b) => averageTime(a) - averageTime(b));
+      return pois;
+    } catch (err) {
+      window.alert(`Bug: ${err}`);
+      $mode = { kind: "input", people };
+      return [];
+    }
+  }
 
   // TODO Should be based on the input
   let limitsMinutes = [0, 12, 24, 36, 48, 60];
@@ -26,8 +45,8 @@
           type: "Feature",
           properties: {
             osm_url: poi.osm_url,
-            kind: poi.osm_url,
-            name: poi.osm_url,
+            kind: poi.kind,
+            name: poi.name,
             times_per_person: poi.times_per_person,
             average: averageTime(poi),
           },
@@ -48,16 +67,18 @@
       <button on:click={() => ($mode = { kind: "title" })}
         >Change study area</button
       >
-      <button on:click={() => ($mode = { kind: "input" })}>Change input</button>
+      <button on:click={() => ($mode = { kind: "input", people })}
+        >Change input</button
+      >
     </div>
 
     <SequentialLegend {colorScale} limits={limitsMinutes} />
 
     <ul>
-      {#each data as poi}
+      {#each pois as poi}
         <li>
           <a href={poi.osm_url} target="_blank"
-            >{poi.name || "Unnamed"} ({poi.kind}</a
+            >{poi.name || "Unnamed"} ({poi.kind})</a
           >
           <span>{JSON.stringify(poi.times_per_person)}</span>
         </li>
@@ -66,7 +87,7 @@
   </div>
 
   <div slot="map">
-    <GeoJSON data={toGj(data)} generateId>
+    <GeoJSON data={toGj(pois)} generateId>
       <CircleLayer
         paint={{
           "circle-radius": 5,
@@ -87,9 +108,36 @@
         hoverCursor="pointer"
       >
         <Popup openOn="hover" let:props>
-          <PropertiesTable properties={props} />
+          <h5>{props.name || "Unnamed"} ({props.kind})</h5>
+          {#each JSON.parse(props.times_per_person) as [name, seconds]}
+            <p>{name}: {Math.round(seconds / 60)} minutes</p>
+          {/each}
         </Popup>
       </CircleLayer>
+
+      {#each people as person, idx}
+        <Marker lngLat={person.home}>
+          <span class="dot">
+            {idx + 1}
+          </span>
+        </Marker>
+      {/each}
     </GeoJSON>
   </div>
 </SplitComponent>
+
+<style>
+  .dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-block;
+
+    background-color: red;
+    color: white;
+    border: 3px solid white;
+    text-align: center;
+    /* TODO Weird way to vertically align */
+    line-height: 250%;
+  }
+</style>

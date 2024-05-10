@@ -3,16 +3,10 @@
   import type { MapMouseEvent } from "maplibre-gl";
   import { onMount, onDestroy } from "svelte";
   import SplitComponent from "./SplitComponent.svelte";
-  import { mode } from "./stores";
-  import { averageTime, model, map, type POI } from "./stores";
+  import { mode, type Person } from "./stores";
+  import { map } from "./stores";
 
-  interface Person {
-    name: string;
-    home: [number, number];
-    maxTimeMinutes: number;
-  }
-
-  let people: Person[] = [];
+  export let people: Person[];
 
   // TODO Wait for loaded
   onMount(() => {
@@ -37,19 +31,6 @@
     people.splice(idx, 1);
     people = people;
   }
-
-  function calculate() {
-    try {
-      let data: POI[] = JSON.parse($model!.findPOIs({ people }));
-
-      // Sort by the average time, just to make the list less intense
-      data.sort((a, b) => averageTime(a) - averageTime(b));
-
-      $mode = { kind: "results", data };
-    } catch (err) {
-      window.alert(`Bug: ${err}`);
-    }
-  }
 </script>
 
 <SplitComponent>
@@ -62,7 +43,11 @@
     </div>
 
     <p>Click the map to add people</p>
-    <button disabled={people.length == 0} on:click={calculate}>Calculate</button
+    <button
+      disabled={people.length == 0}
+      on:click={() => {
+        $mode = { kind: "results", people };
+      }}>Calculate</button
     >
 
     {#each people as person, idx}

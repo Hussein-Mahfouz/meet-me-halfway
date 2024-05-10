@@ -7,6 +7,12 @@ export let maptilerApiKey = "MZEJTanw3WpxRvt7qDfo";
 export let sidebarContents: Writable<HTMLDivElement | null> = writable(null);
 export let mapContents: Writable<HTMLDivElement | null> = writable(null);
 
+export interface Person {
+  name: string;
+  home: [number, number];
+  maxTimeMinutes: number;
+}
+
 export interface POI {
   osm_url: string;
   point: {
@@ -20,8 +26,8 @@ export interface POI {
 
 export type Mode =
   | { kind: "title" }
-  | { kind: "input" }
-  | { kind: "results"; data: POI[] };
+  | { kind: "input"; people: Person[] }
+  | { kind: "results"; people: Person[] };
 
 export let mode: Writable<Mode> = writable({ kind: "title" });
 export let model: Writable<MapModel | null> = writable(null);
