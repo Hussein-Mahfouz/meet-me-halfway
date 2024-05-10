@@ -27,3 +27,11 @@ export let mode: Writable<Mode> = writable({ kind: "title" });
 export let model: Writable<MapModel | null> = writable(null);
 export let map: Writable<Map | null> = writable(null);
 export let showAbout: Writable<boolean> = writable(true);
+
+export function averageTime(poi: POI): number {
+  let sum = 0;
+  for (let x of poi.times_per_person) {
+    sum += x[1];
+  }
+  return sum / poi.times_per_person.length;
+}

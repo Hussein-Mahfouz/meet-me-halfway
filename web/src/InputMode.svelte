@@ -4,7 +4,7 @@
   import { onMount, onDestroy } from "svelte";
   import SplitComponent from "./SplitComponent.svelte";
   import { mode } from "./stores";
-  import { model, map, type POI } from "./stores";
+  import { averageTime, model, map, type POI } from "./stores";
 
   interface Person {
     name: string;
@@ -42,8 +42,8 @@
     try {
       let data: POI[] = JSON.parse($model!.findPOIs({ people }));
 
-      // Sort by the first person's time, just to make the list less intense
-      data.sort((a, b) => a.times_per_person[0][1] - b.times_per_person[0][1]);
+      // Sort by the average time, just to make the list less intense
+      data.sort((a, b) => averageTime(a) - averageTime(b));
 
       $mode = { kind: "results", data };
     } catch (err) {

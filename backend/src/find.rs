@@ -22,6 +22,7 @@ pub struct POI {
 pub fn find_pois(graph: &Graph, req: Request) -> Vec<POI> {
     let mut pois: HashMap<AmenityID, POI> = HashMap::new();
 
+    let num_people = req.people.len();
     for person in req.people {
         for (a, cost) in get_costs(graph, &person) {
             let amenity = &graph.amenities[a.0];
@@ -38,7 +39,10 @@ pub fn find_pois(graph: &Graph, req: Request) -> Vec<POI> {
         }
     }
 
-    pois.into_values().collect()
+    // Only keep results that everyone can reach
+    pois.into_values()
+        .filter(|poi| poi.times_per_person.len() == num_people)
+        .collect()
 }
 
 fn get_costs(graph: &Graph, person: &Person) -> HashMap<AmenityID, Duration> {

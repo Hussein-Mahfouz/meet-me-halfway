@@ -1,11 +1,22 @@
 <script lang="ts">
   import { GeoJSON, CircleLayer, hoverStateFilter } from "svelte-maplibre";
-  import { PropertiesTable, Popup, notNull } from "svelte-utils";
+  import {
+    SequentialLegend,
+    makeColorRamp,
+    PropertiesTable,
+    Popup,
+    notNull,
+  } from "svelte-utils";
   import SplitComponent from "./SplitComponent.svelte";
-  import { mode, type POI } from "./stores";
+  import { mode, type POI, averageTime } from "./stores";
   import type { FeatureCollection } from "geojson";
 
   export let data: POI[];
+
+  // TODO Should be based on the input
+  let limitsMinutes = [0, 12, 24, 36, 48, 60];
+  let limitsSeconds = limitsMinutes.map((x) => x * 60);
+  let colorScale = ["#CDE594", "#80C6A3", "#1F9EB7", "#186290", "#080C54"];
 
   function toGj(data: POI[]): FeatureCollection {
     return {
@@ -18,6 +29,7 @@
             kind: poi.osm_url,
             name: poi.osm_url,
             times_per_person: poi.times_per_person,
+            average: averageTime(poi),
           },
           geometry: {
             type: "Point",
@@ -39,6 +51,8 @@
       <button on:click={() => ($mode = { kind: "input" })}>Change input</button>
     </div>
 
+    <SequentialLegend {colorScale} limits={limitsMinutes} />
+
     <ul>
       {#each data as poi}
         <li>
@@ -57,8 +71,12 @@
         paint={{
           "circle-radius": 5,
           "circle-opacity": 0,
-          "circle-stroke-width": 2,
-          "circle-stroke-color": hoverStateFilter("orange", "red"),
+          "circle-stroke-width": hoverStateFilter(2, 4),
+          "circle-stroke-color": makeColorRamp(
+            ["get", "average"],
+            limitsSeconds,
+            colorScale,
+          ),
         }}
         manageHoverState
         on:click={(e) =>
