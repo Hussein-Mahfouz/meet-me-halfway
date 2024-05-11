@@ -3,7 +3,7 @@
   import type { MapMouseEvent } from "maplibre-gl";
   import { onMount, onDestroy } from "svelte";
   import SplitComponent from "./SplitComponent.svelte";
-  import { mode, type Person } from "./stores";
+  import { mode, type Person, colours } from "./stores";
   import { map } from "./stores";
 
   export let people: Person[];
@@ -71,7 +71,7 @@
   <div slot="map">
     {#each people as person, idx}
       <Marker draggable bind:lngLat={person.home}>
-        <span class="dot">
+        <span class="dot" style="background-color: {colours[idx % colours.length]}">
           {idx + 1}
         </span>
       </Marker>
@@ -84,14 +84,13 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    display: inline-block;
 
-    background-color: red;
     color: white;
     border: 3px solid white;
-    text-align: center;
-    /* TODO Weird way to vertically align */
-    line-height: 250%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   .dot:hover {
     border: 6px solid white;

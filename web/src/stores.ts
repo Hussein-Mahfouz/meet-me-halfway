@@ -41,3 +41,5 @@ export function averageTime(poi: POI): number {
   }
   return sum / poi.times_per_person.length;
 }
+
+export let colours = ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3", "#937860", "#DA8BC3"]

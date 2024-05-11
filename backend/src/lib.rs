@@ -72,8 +72,9 @@ impl MapModel {
             .unwrap()
             .data;
 
-        let mut features = Vec::new();
+        let mut routes = Vec::new();
         for person in req.people {
+            let mut features = Vec::new();
             let start = self
                 .graph
                 .closest_intersection
@@ -89,8 +90,9 @@ impl MapModel {
                     .route(&self.graph, start, end)
                     .map_err(err_to_js)?,
             );
+            routes.push(GeoJson::from(features));
         }
-        Ok(serde_json::to_string(&GeoJson::from(features)).map_err(err_to_js)?)
+        Ok(serde_json::to_string(&routes).map_err(err_to_js)?)
     }
 }
 
