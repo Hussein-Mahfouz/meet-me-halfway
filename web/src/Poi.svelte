@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type POI } from "./stores";
   import type { Feature, Point, FeatureCollection } from "geojson";
+
   export let poi: POI;
   export let hoveredAmenity: Feature<Point> | null;
   export let gjData: FeatureCollection<Point>;
@@ -8,7 +9,6 @@
   function setHoveredAmenity(poi: POI) {
     let feat = gjData.features.find((f) => f.properties!.osm_url === poi.osm_url);
     if (feat) {
-      console.log(feat);
       hoveredAmenity = feat;
     }
     else {
@@ -19,8 +19,9 @@
 
 <div
     class="poi"
-    on:mouseover={() => setHoveredAmenity(poi)}
-    on:mouseout={() => {hoveredAmenity = null;}}
+    on:mouseenter={() => setHoveredAmenity(poi)}
+    on:mouseleave={() => {hoveredAmenity = null;}}
+    role="tooltip"
 >
     <p>{poi.name || "Unnamed"} ({poi.kind})</p>
 
