@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use geo::{Coord, LineString};
-use osm_reader::{Element, OsmID};
+use osm_reader::OsmID;
 use rstar::primitives::GeomWithData;
 use rstar::RTree;
 use utils::Tags;
@@ -13,66 +13,55 @@ use crate::graph::{
 };
 use crate::route::Router;
 
+struct ReadAmenities {
+    amenities: Vec<Amenity>,
+}
+
+impl utils::osm2graph::OsmReader for ReadAmenities {
+    fn node(&mut self, id: osm_reader::NodeID, pt: Coord, tags: Tags) {
+        self.amenities.extend(Amenity::maybe_new(
+            &tags,
+            OsmID::Node(id),
+            pt.into(),
+            AmenityID(self.amenities.len()),
+        ));
+    }
+
+    fn way(
+        &mut self,
+        id: osm_reader::WayID,
+        node_ids: &Vec<osm_reader::NodeID>,
+        node_mapping: &HashMap<osm_reader::NodeID, Coord>,
+        tags: &Tags,
+    ) {
+        self.amenities.extend(Amenity::maybe_new(
+            tags,
+            OsmID::Way(id),
+            // TODO Centroid
+            node_mapping[&node_ids[0]].into(),
+            AmenityID(self.amenities.len()),
+        ));
+    }
+
+    // TODO Are there amenities as relations?
+}
+
 pub fn scrape_osm(input_bytes: &[u8]) -> Result<Graph> {
     info!("Parsing {} bytes of OSM data", input_bytes.len());
-    // This doesn't use osm2graph's helper, because it needs to scrape more things from OSM
-    let mut node_mapping = HashMap::new();
-    let mut highways = Vec::new();
-    let mut amenities = Vec::new();
-    osm_reader::parse(input_bytes, |elem| match elem {
-        Element::Node {
-            id, lon, lat, tags, ..
-        } => {
-            let pt = Coord { x: lon, y: lat };
-            node_mapping.insert(id, pt);
 
-            let tags = tags.into();
-            amenities.extend(Amenity::maybe_new(
-                &tags,
-                OsmID::Node(id),
-                pt.into(),
-                AmenityID(amenities.len()),
-            ));
-        }
-        Element::Way {
-            id,
-            mut node_ids,
-            tags,
-            ..
-        } => {
-            let tags: Tags = tags.into();
-
-            amenities.extend(Amenity::maybe_new(
-                &tags,
-                OsmID::Way(id),
-                // TODO Centroid
-                node_mapping[&node_ids[0]].into(),
-                AmenityID(amenities.len()),
-            ));
-
-            if tags.has("highway")
+    let mut amenities = ReadAmenities {
+        amenities: Vec::new(),
+    };
+    let graph = utils::osm2graph::Graph::new(
+        input_bytes,
+        |tags| {
+            tags.has("highway")
                 && !tags.is("highway", "proposed")
                 && !tags.is("area", "yes")
                 && !tags.is("foot", "no")
-            {
-                // TODO This sometimes happens from Overpass?
-                let num = node_ids.len();
-                node_ids.retain(|n| node_mapping.contains_key(n));
-                if node_ids.len() != num {
-                    warn!("{id} refers to nodes outside the imported area");
-                }
-                if node_ids.len() >= 2 {
-                    highways.push(utils::osm2graph::Way { id, node_ids, tags });
-                }
-            }
-        }
-        // TODO Amenity relations?
-        Element::Relation { .. } => {}
-        Element::Bounds { .. } => {}
-    })?;
-
-    info!("Splitting {} ways into edges", highways.len());
-    let graph = utils::osm2graph::Graph::from_scraped_osm(node_mapping, highways);
+        },
+        &mut amenities,
+    )?;
 
     // Copy all the fields
     let intersections: Vec<Intersection> = graph
@@ -97,11 +86,11 @@ pub fn scrape_osm(input_bytes: &[u8]) -> Result<Graph> {
             amenities: Vec::new(),
         })
         .collect();
-    for a in &mut amenities {
+    for a in &mut amenities.amenities {
         a.point = graph.mercator.pt_to_mercator(a.point.into()).into();
     }
 
-    snap_amenities(&mut roads, &amenities);
+    snap_amenities(&mut roads, &amenities.amenities);
 
     let mut points = Vec::new();
     for i in &intersections {
@@ -118,7 +107,7 @@ pub fn scrape_osm(input_bytes: &[u8]) -> Result<Graph> {
         closest_intersection,
         boundary_polygon: graph.boundary_polygon,
 
-        amenities,
+        amenities: amenities.amenities,
         router,
     })
 }

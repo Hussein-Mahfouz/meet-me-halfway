@@ -63,7 +63,7 @@ dependencies = [
  "anyhow",
  "console_error_panic_hook",
  "console_log",
- "fast_paths",
+ "fast_paths 1.0.0 (git+https://github.com/easbar/fast_paths)",
  "geo",
  "geojson",
  "log",
@@ -204,7 +204,18 @@ dependencies = [
 [[package]]
 name = "fast_paths"
 version = "1.0.0"
-source = "git+https://github.com/easbar/fast_paths#fee17adb34dc346102e8dc819052e2144a331243"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c81c255f345762d8303062464a32cc862c2e1eb1b55fa9f90df74b59eea9c8da"
+dependencies = [
+ "log",
+ "priority-queue",
+ "serde",
+]
+
+[[package]]
+name = "fast_paths"
+version = "1.0.0"
+source = "git+https://github.com/easbar/fast_paths#cf922636fbafe2e3aa23795e6c5ccb05f8758e66"
 dependencies = [
  "log",
  "priority-queue",
@@ -397,9 +408,9 @@ checksum = "c4cd1a83af159aa67994778be9070f0ae1bd732942279cabb14f86f986a21456"
 
 [[package]]
 name = "log"
-version = "0.4.20"
+version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 
 [[package]]
 name = "memchr"
@@ -779,11 +790,12 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 [[package]]
 name = "utils"
 version = "0.1.0"
-source = "git+https://github.com/a-b-street/utils#142ddd9673b00d752832a5e386a6a7f50906d2d4"
+source = "git+https://github.com/a-b-street/utils#621e0f90ea6cbea8c8ca7906188905747f883c99"
 dependencies = [
  "anyhow",
- "fast_paths",
+ "fast_paths 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "geo",
+ "log",
  "osm-reader",
 ]
 
