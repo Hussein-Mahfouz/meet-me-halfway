@@ -23,12 +23,11 @@
   }
 </script>
 
-<div
+<button
     class="poi"
     on:mouseenter={() => setHoveredAmenity(poi)}
     on:mouseleave={() => {hoveredAmenity = null;}}
     on:click={() => centreMapOnAmenity(poi)}
-    role="tooltip"
 >
     <p>{poi.name || "Unnamed"} ({poi.kind})</p>
 
@@ -39,7 +38,7 @@
     </div>
 
     <p><a class="osm_link" href={poi.osm_url} target="_blank">View on OpenStreetMap</a></p>
-</div>
+</button>
 
 <style>
   .poi {
@@ -47,10 +46,17 @@
     border: 2px solid black;
     border-radius: 5px;
     cursor: pointer;
+    background-color: white;
+    color: black;
+  }
+
+  .poi>p {
+    text-align: left;
+    color: black;
   }
 
   .poi:hover {
-    background-color: #eee;
+    background-color: #e3fcf1;
   }
 
   .costs {
