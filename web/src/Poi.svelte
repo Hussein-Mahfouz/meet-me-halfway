@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type POI } from "./stores";
+  import { type POI, map } from "./stores";
   import type { Feature, Point, FeatureCollection } from "geojson";
 
   export let poi: POI;
@@ -15,13 +15,19 @@
       console.log("Couldn't find feature for", poi);
     }
   }
+
+  function centreMapOnAmenity(poi: POI) {
+    if ($map) {
+      $map.flyTo({center: [poi.point.x, poi.point.y]});
+    }
+  }
 </script>
 
-<div
+<button
     class="poi"
     on:mouseenter={() => setHoveredAmenity(poi)}
     on:mouseleave={() => {hoveredAmenity = null;}}
-    role="tooltip"
+    on:click={() => centreMapOnAmenity(poi)}
 >
     <p>{poi.name || "Unnamed"} ({poi.kind})</p>
 
@@ -32,17 +38,25 @@
     </div>
 
     <p><a class="osm_link" href={poi.osm_url} target="_blank">View on OpenStreetMap</a></p>
-</div>
+</button>
 
 <style>
   .poi {
     padding: 10px;
     border: 2px solid black;
     border-radius: 5px;
+    cursor: pointer;
+    background-color: white;
+    color: black;
+  }
+
+  .poi>p {
+    text-align: left;
+    color: black;
   }
 
   .poi:hover {
-    background-color: #eee;
+    background-color: #e3fcf1;
   }
 
   .costs {
